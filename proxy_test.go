@@ -6,7 +6,7 @@ import (
 )
 
 func TestAddProxy(t *testing.T) {
-	s := scraper{}
+	s := Scraper{}
 	s.AddProxy("http://127.0.0.1:8080")
 	proxyUrl, _ := url.Parse("http://127.0.0.1:8080")
 	if s.proxyList[0].String() != proxyUrl.String() {
@@ -15,7 +15,7 @@ func TestAddProxy(t *testing.T) {
 }
 
 func TestAddProxyFail(t *testing.T) {
-	s := scraper{}
+	s := Scraper{}
 	err := s.AddProxy("http!//Not_a_Proxy_Address:70000")
 	if err == nil {
 		t.Error("Error check proxy url")
@@ -23,7 +23,7 @@ func TestAddProxyFail(t *testing.T) {
 }
 
 func TestNextProxy(t *testing.T) {
-	s := scraper{}
+	s := Scraper{}
 
 	getNextProxyUrl := s.nextProxy()
 

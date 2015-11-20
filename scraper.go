@@ -3,7 +3,6 @@ package scraper
 import (
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -15,6 +14,7 @@ type Scraper struct {
 	proxyList         []*url.URL
 	linksList         []string
 	maxConcurrent     int
+	maxRetry          int
 	patern            Patern
 	getNextProxy      func() *url.URL
 	wg                sync.WaitGroup
@@ -23,13 +23,13 @@ type Scraper struct {
 
 //Patern interface must be use to give crawler format output data and function for parsing content and function to save data. Data type  must have methods Parse(io.Reader) and Save().
 type Patern interface {
-	Parse(io.Reader)
+	Parse(*http.Response)
 	Save()
 }
 
 //NewScraper - use for create new  crawler.
-func NewScraper(maxConcurrent int, patern Patern) *Scraper {
-	s := Scraper{maxConcurrent: maxConcurrent}
+func NewScraper(maxConcurrent int, maxRetry int, patern Patern) *Scraper {
+	s := Scraper{maxConcurrent: maxConcurrent, maxRetry: maxRetry}
 	s.getNextProxy = s.nextProxy()
 	s.patern = patern
 	s.concurrentCounter = make(chan bool, s.maxConcurrent)
@@ -52,17 +52,26 @@ func (s *Scraper) RunCrawler() {
 func (s *Scraper) getPage(href string) {
 	defer s.wg.Done()
 	var httpClient *http.Client
-	if len(s.proxyList) > 0 {
-		httpClient = &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(s.getNextProxy())}}
-	} else {
-		httpClient = &http.Client{}
-	}
-	resp, err := httpClient.Get(href)
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		s.patern.Parse(resp.Body)
-		s.patern.Save()
+	for try := 0; try < 3; try++ {
+		if len(s.proxyList) > 0 {
+			httpClient = &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(s.getNextProxy())}}
+		} else {
+			httpClient = &http.Client{}
+		}
+		resp, err := httpClient.Get(href)
+
+		if err != nil {
+			fmt.Println(href)
+			fmt.Println(err)
+			break
+		} else if resp.StatusCode > 300 {
+			fmt.Println(href)
+			fmt.Println(resp.Status)
+		} else {
+			s.patern.Parse(resp)
+			s.patern.Save()
+			break
+		}
 	}
 	// patern := s.patern
 	<-s.concurrentCounter

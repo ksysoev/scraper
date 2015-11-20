@@ -1,7 +1,7 @@
 package scraper
 
 import (
-	"io"
+	"net/http"
 	"testing"
 )
 
@@ -12,7 +12,7 @@ type PaternStructure struct {
 	test string
 }
 
-func (p *PaternStructure) Parse(body io.Reader) {
+func (p *PaternStructure) Parse(resp *http.Response) {
 	ParseOk = false
 }
 
@@ -22,7 +22,7 @@ func (p *PaternStructure) Save() {
 
 func TestNewScraper(t *testing.T) {
 	testPatern := PaternStructure{}
-	s := NewScraper(1, &testPatern)
+	s := NewScraper(1, 1, &testPatern)
 	if s.maxConcurrent != 1 {
 		t.Error("Can't create a Scraper")
 	}
@@ -30,7 +30,7 @@ func TestNewScraper(t *testing.T) {
 
 func TestRunScraper(t *testing.T) {
 	testPatern := PaternStructure{}
-	s := NewScraper(1, &testPatern)
+	s := NewScraper(1, 1, &testPatern)
 	s.RunCrawler()
 }
 
