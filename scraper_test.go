@@ -7,6 +7,7 @@ import (
 
 var ParseOk = true
 var SaveOk = true
+var LogOk = true
 
 type PaternStructure struct {
 	test string
@@ -18,6 +19,10 @@ func (p *PaternStructure) Parse(resp *http.Response) {
 
 func (p *PaternStructure) Save() {
 	SaveOk = false
+}
+
+func (p *PaternStructure) LogError(err error) {
+	LogOk = false
 }
 
 func TestNewScraper(t *testing.T) {
