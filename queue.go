@@ -5,4 +5,5 @@ func (s *Scraper) runQueue() {
 		s.queue <- currenLink
 	}
 	s.notDone = false
+	close(s.queue)
 }

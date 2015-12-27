@@ -1,9 +1,12 @@
 package scraper
 
-import "fmt"
+import (
+	"fmt"
+	"net/url"
+)
 
 type ScraperError struct {
-	Proxy       string
+	Proxy       *url.URL
 	URL         string
 	ErrorString string
 }

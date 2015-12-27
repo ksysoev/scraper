@@ -3,7 +3,6 @@ package scraper
 import (
 	"net/http"
 	"net/url"
-	"time"
 )
 
 func (s *Scraper) runWorker() {
@@ -13,32 +12,30 @@ func (s *Scraper) runWorker() {
 	}()
 	var httpClient *http.Client
 	var currentProxy *url.URL
-	for s.notDone {
-		select {
-		case task := <-s.queue:
-		page:
-			for try := 0; try < s.maxRetry; try++ {
-				if len(s.proxyList) > 0 {
-					currentProxy = s.getNextProxy()
-					httpClient = &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(currentProxy)}}
-				} else {
-					httpClient = &http.Client{}
-				}
-				resp, err := httpClient.Get(task)
-				if err != nil {
-					errScraper := ScraperError{currentProxy.String(), task, err.Error()}
-					s.patern.LogError(errScraper)
-				} else if resp.StatusCode > 300 {
-					errScraper := ScraperError{currentProxy.String(), task, resp.Status}
-					s.patern.LogError(errScraper)
-				} else {
-					s.patern.Parse(resp)
-					s.patern.Save()
-					break page
-				}
+	for task := range s.queue {
+	page:
+		for try := 0; try < s.maxRetry; try++ {
+			if len(s.proxyList) > 0 {
+				currentProxy = s.getNextProxy()
+				httpClient = &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(currentProxy)}}
+			} else {
+				currentProxy = nil
+				httpClient = &http.Client{}
 			}
-		case <-time.After(time.Second * 1):
-			return
+			resp, err := httpClient.Get(task)
+			if err != nil {
+				errScraper := ScraperError{currentProxy, task, err.Error()}
+				result := Response{http.Response{}, errScraper, currentProxy}
+				s.Results <- result
+			} else if resp.StatusCode >= 300 {
+				errScraper := ScraperError{currentProxy, task, resp.Status}
+				result := Response{*resp, errScraper, currentProxy}
+				s.Results <- result
+			} else {
+				result := Response{*resp, nil, currentProxy}
+				s.Results <- result
+				break page
+			}
 		}
 	}
 }
