@@ -3,6 +3,7 @@ Simple go web scraper
 
 #Example
 
+```go
 import "github.com/pestkam/scraper"
 
 scrap.AddLink("http://example.com")
@@ -15,3 +16,4 @@ for result := range scrap.Results {
   body, _ := ioutil.ReadAll(result.Body)
   fmt.Println(string(body))
 }
+```
