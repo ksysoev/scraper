@@ -6,6 +6,7 @@ Simple go web scraper
 ```go
 import "github.com/pestkam/scraper"
 
+scrap := scraper.NewScraper(1, 3)
 scrap.AddLink("http://example.com")
 go scrap.RunCrawler()
 for result := range scrap.Results {
