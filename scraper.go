@@ -8,11 +8,11 @@ import (
 
 //Scraper - structure for crawler, dont use manual create object, use NewScraper(int(maximum concarensy), Patern(output format and functions for parsing))
 type Scraper struct {
-	proxyList         []*url.URL
+	proxyList         []proxyItem
 	linksList         []string
 	maxConcurrent     int
 	maxRetry          int
-	getNextProxy      func() *url.URL
+	getNextProxy      func() *proxyItem
 	wg                sync.WaitGroup
 	concurrentCounter chan bool
 	queue             chan string
